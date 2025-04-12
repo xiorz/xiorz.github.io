@@ -1,106 +1,98 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok Info</title>
+    <title>TikTok Info Fetcher</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            padding: 20px;
-        }
-        .container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: auto;
-        }
-        .title {
-            font-size: 24px;
-            font-weight: bold;
+            background-color: #f4f4f4;
             color: #333;
             text-align: center;
         }
-        .profile-info {
+        .output {
             margin-top: 20px;
-            color: #333;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
         }
-        .profile-info span {
-            font-weight: bold;
-        }
-        .profile-info p {
-            margin: 5px 0;
+        .output p {
+            font-size: 16px;
         }
         .avatar img {
-            max-width: 150px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            margin-top: 10px;
-        }
-        .error {
-            color: red;
-            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="title">Tiktok Info</h1>
-        <div>
-            <input type="text" id="username" placeholder="Enter TikTok Username" style="width: 100%; padding: 10px;">
-            <button onclick="getTikTokInfo()" style="padding: 10px; background-color: #4CAF50; color: white; border: none; width: 100%; margin-top: 10px;">Get Info</button>
-        </div>
-        <div id="result" class="profile-info"></div>
-        <div class="avatar" id="avatar"></div>
-        <div id="error-message" class="error"></div>
+    <h1>Get TikTok Info</h1>
+    <input type="text" id="username" placeholder="Enter TikTok username" />
+    <button onclick="getTikTokInfo()">Fetch Info</button>
+
+    <div id="info" class="output" style="display: none;">
+        <h2>Profile Information</h2>
+        <div id="avatar" class="avatar"></div>
+        <p><strong>Name:</strong> <span id="nickname">N/A</span></p>
+        <p><strong>Bio:</strong> <span id="signature">N/A</span></p>
+        <p><strong>Followers:</strong> <span id="followers">N/A</span></p>
+        <p><strong>Following:</strong> <span id="following">N/A</span></p>
+        <p><strong>Likes:</strong> <span id="likes">N/A</span></p>
+        <p><strong>Uploads:</strong> <span id="uploads">N/A</span></p>
+        <p><strong>Verified:</strong> <span id="verified">No</span></p>
+        <p><strong>Profile:</strong> <a href="#" id="profile-url">Visit Profile</a></p>
     </div>
 
     <script>
-        function getTikTokInfo() {
-            var username = document.getElementById('username').value.trim();
+        async function getTikTokInfo() {
+            const username = document.getElementById('username').value.replace('@', '');
             if (!username) {
-                alert("Please enter a username.");
+                alert('Please enter a TikTok username.');
                 return;
             }
 
-            fetch(`https://www.tiktok.com/@${username}`)
-                .then(response => response.text())
-                .then(html => {
-                    let nickname = html.match(/"nickname":"(.*?)"/);
-                    let signature = html.match(/"signature":"(.*?)"/);
-                    let followers = html.match(/"followerCount":(\d+)/);
-                    let following = html.match(/"followingCount":(\d+)/);
-                    let likes = html.match(/"heartCount":(\d+)/);
-                    let videos = html.match(/"videoCount":(\d+)/);
-                    let avatar = html.match(/"avatarLarger":"(.*?)"/);
-                    let verified = html.match(/"verified":(true|false)/);
+            const url = `https://www.tiktok.com/@${username}`;
 
-                    let resultHtml = '';
-                    if (nickname) resultHtml += `<p><span>Nama:</span> ${nickname[1]}</p>`;
-                    if (signature) resultHtml += `<p><span>Bio:</span> ${signature[1]}</p>`;
-                    if (followers) resultHtml += `<p><span>Followers:</span> ${followers[1]}</p>`;
-                    if (following) resultHtml += `<p><span>Following:</span> ${following[1]}</p>`;
-                    if (likes) resultHtml += `<p><span>Likes:</span> ${likes[1]}</p>`;
-                    if (videos) resultHtml += `<p><span>Videos Uploaded:</span> ${videos[1]}</p>`;
-                    resultHtml += `<p><span>Verified:</span> ${verified && verified[1] === 'true' ? 'Yes' : 'No'}</p>`;
-                    resultHtml += `<p><span>Profile:</span> <a href="https://www.tiktok.com/@${username}" target="_blank">Visit Profile</a></p>`;
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
 
-                    document.getElementById('result').innerHTML = resultHtml;
+                // Regex parsing to extract data
+                const nickname = /"nickname":"(.*?)"/.exec(text);
+                const signature = /"signature":"(.*?)"/.exec(text);
+                const followers = /"followerCount":(\d+)/.exec(text);
+                const following = /"followingCount":(\d+)/.exec(text);
+                const likes = /"heartCount":(\d+)/.exec(text);
+                const videos = /"videoCount":(\d+)/.exec(text);
+                const avatar = /"avatarLarger":"(.*?)"/.exec(text);
+                const verified = /"verified":(true|false)/.exec(text);
 
-                    if (avatar) {
-                        document.getElementById('avatar').innerHTML = `<img src="${avatar[1]}" alt="Avatar">`;
-                    }
+                // Display the information
+                document.getElementById('nickname').textContent = nickname ? nickname[1] : 'N/A';
+                document.getElementById('signature').textContent = signature ? signature[1] : 'N/A';
+                document.getElementById('followers').textContent = followers ? followers[1] : 'N/A';
+                document.getElementById('following').textContent = following ? following[1] : 'N/A';
+                document.getElementById('likes').textContent = likes ? likes[1] : 'N/A';
+                document.getElementById('uploads').textContent = videos ? videos[1] : 'N/A';
+                document.getElementById('verified').textContent = verified && verified[1] === 'true' ? 'Yes' : 'No';
+                document.getElementById('profile-url').href = url;
+                document.getElementById('profile-url').textContent = url;
 
-                    document.getElementById('error-message').innerHTML = '';
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    document.getElementById('error-message').innerHTML = "Failed to retrieve data. Please try again.";
-                    document.getElementById('result').innerHTML = '';
-                    document.getElementById('avatar').innerHTML = '';
-                });
+                if (avatar) {
+                    const avatarUrl = avatar[1].replace("\\", "");
+                    document.getElementById('avatar').innerHTML = `<img src="${avatarUrl}" alt="Profile Avatar" />`;
+                }
+
+                // Show the info section
+                document.getElementById('info').style.display = 'block';
+            } catch (error) {
+                alert('Error fetching TikTok info: ' + error.message);
+            }
         }
     </script>
 </body>
