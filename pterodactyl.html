@@ -1,0 +1,79 @@
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>Login to Continue</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <style>
+   @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+   body {
+     font-family: 'Inter', sans-serif;
+   }
+   #loginForm, #footer {
+     transition: opacity 0.5s ease;
+   }
+  </style>
+ </head>
+ <body class="bg-[#344154] min-h-screen flex flex-col justify-between">
+
+  <!-- Audio yang akan diputar otomatis jika login benar -->
+  <audio id="music" src="https://xiorz.github.io/eaa_20-04-25_00-01-47-755.mp3" autoplay loop></audio>
+
+  <div class="pt-16 px-6">
+   <h1 class="text-center text-white text-3xl font-semibold mb-6">Login to Continue</h1>
+   <div id="loginForm" class="bg-white rounded-lg p-6 max-w-md mx-auto shadow-md">
+    <div class="flex justify-center mb-6">
+     <img class="w-36 h-36 object-contain" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgPwWKpyDPdM7WB03ECW3aJy-0ll2EOdLJ0w&s" alt="Login Image"/>
+    </div>
+    <form class="space-y-6" onsubmit="handleLogin(event)">
+     <div>
+      <label class="block text-xs font-semibold text-gray-600 mb-1" for="username">USERNAME OR EMAIL</label>
+      <input id="username" type="text" class="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900" />
+     </div>
+     <div>
+      <label class="block text-xs font-semibold text-gray-600 mb-1" for="password">PASSWORD</label>
+      <input id="password" type="password" class="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900" />
+     </div>
+     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-md">LOGIN</button>
+    </form>
+    <div class="mt-6 text-center">
+     <a class="text-gray-500 text-sm font-medium hover:underline" href="#">FORGOT PASSWORD?</a>
+    </div>
+   </div>
+  </div>
+
+  <footer id="footer" class="text-center text-gray-400 text-sm py-4 select-none">
+   © 2015 - 2023 Pterodactyl Software
+  </footer>
+
+  <script>
+   document.getElementById('music').style.display = 'none';
+
+   function handleLogin(event) {
+     event.preventDefault();
+
+     const username = document.getElementById('username').value.trim();
+     const password = document.getElementById('password').value.trim();
+     const music = document.getElementById('music');
+
+     if (username && password === username + '001') {
+       // Sembunyikan form & footer
+       document.getElementById('loginForm').style.opacity = '0';
+       document.getElementById('footer').style.opacity = '0';
+
+       setTimeout(() => {
+         document.getElementById('loginForm').style.display = 'none';
+         document.getElementById('footer').style.display = 'none';
+         music.style.display = 'block';
+         music.volume = 1.0;
+         music.play();
+       }, 500);
+     } else {
+       alert("Username dan password tidak sesuai format!");
+     }
+   }
+  </script>
+
+ </body>
+</html>
