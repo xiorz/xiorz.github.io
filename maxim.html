@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Maxim Si Pelari Cepat</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #eef; overflow: hidden; font-family: sans-serif; text-align: center; }
+    canvas { display: block; margin: 0 auto; background: #88c; border: 4px solid #444; border-radius: 10px; }
+    #jumpBtn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #score {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="480" height="320"></canvas>
+  <div id="score">Skor: 0</div>
+  <button id="jumpBtn">LONCAT!</button>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const groundY = canvas.height - 50;
+    const gravity = 0.6;
+    let keys = {};
+    let gameOver = false;
+    let score = 0;
+    let gameStarted = false;
+
+    const scoreDisplay = document.getElementById("score");
+    const jumpBtn = document.getElementById("jumpBtn");
+
+    const characterImgs = {
+      idle: "https://i.ibb.co.com/r22X2jCZ/20250424-010216.png",
+      run: "https://i.ibb.co.com/n8fcHBfc/20250424-010334.png",
+      jump: "https://i.ibb.co.com/C5fx1JMn/20250424-010302.png"
+    };
+
+    // Preload images
+    const characterImages = {
+      idle: new Image(),
+      run: new Image(),
+      jump: new Image()
+    };
+
+    characterImages.idle.src = characterImgs.idle;
+    characterImages.run.src = characterImgs.run;
+    characterImages.jump.src = characterImgs.jump;
+
+    const character = {
+      x: 80,
+      y: groundY,
+      width: 80,
+      height: 80,
+      vy: 0,
+      jumping: false,
+      running: false,
+      image: characterImages.idle,
+      state: "idle"
+    };
+
+    const obstacles = [];
+
+    function spawnObstacle() {
+      obstacles.push({
+        x: canvas.width + Math.random() * 200,
+        y: groundY,
+        width: 20,
+        height: 20,
+        type: Math.random() > 0.5 ? 'rock' : 'spike'
+      });
+    }
+
+    setInterval(spawnObstacle, 2000);
+
+    function drawCharacter() {
+      ctx.drawImage(character.image, character.x, character.y - character.height, character.width, character.height);
+    }
+
+    function drawObstacles() {
+      for (let obs of obstacles) {
+        ctx.fillStyle = obs.type === 'rock' ? "#333" : "#a00";
+        ctx.fillRect(obs.x, obs.y - obs.height, obs.width, obs.height);
+      }
+    }
+
+    function updateCharacterState() {
+      if (character.jumping && character.state !== "jump") {
+        character.image = characterImages.jump;
+        character.state = "jump";
+      } else if ((keys["ArrowRight"] || keys["d"]) && !character.jumping && character.state !== "run") {
+        character.image = characterImages.run;
+        character.state = "run";
+        character.running = true;
+      } else if (!(keys["ArrowRight"] || keys["d"]) && !character.jumping && character.state !== "idle") {
+        character.image = characterImages.idle;
+        character.state = "idle";
+        character.running = false;
+      }
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#4a8";
+      ctx.fillRect(0, groundY, canvas.width, 50);
+
+      // Update state
+      updateCharacterState();
+
+      // Movement
+      if ((keys["ArrowRight"] || keys["d"]) && character.x < canvas.width - character.width) {
+        character.x += 3;
+        gameStarted = true;
+      }
+
+      if ((keys["ArrowUp"] || keys[" "] || keys["w"]) && !character.jumping) {
+        character.vy = -10;
+        character.jumping = true;
+        gameStarted = true;
+      }
+
+      character.y += character.vy;
+      character.vy += gravity;
+      if (character.y >= groundY) {
+        character.y = groundY;
+        character.vy = 0;
+        character.jumping = false;
+      }
+
+      for (let obs of obstacles) {
+        obs.x -= 4;
+        if (character.x + character.width > obs.x && character.x < obs.x + obs.width &&
+            character.y > obs.y - obs.height) {
+          gameOver = true;
+          setTimeout(() => {
+            alert("Game Over!\nSkormu: " + score);
+            document.location.reload();
+          }, 100);
+          return;
+        }
+      }
+
+      if (gameStarted) {
+        score++;
+        scoreDisplay.innerText = "Skor: " + score;
+      }
+
+      drawCharacter();
+      drawObstacles();
+
+      requestAnimationFrame(update);
+    }
+
+    window.addEventListener("keydown", e => keys[e.key] = true);
+    window.addEventListener("keyup", e => keys[e.key] = false);
+
+    jumpBtn.addEventListener("click", () => {
+      if (!character.jumping) {
+        character.vy = -10;
+        character.jumping = true;
+        gameStarted = true;
+      }
+    });
+
+    update();
+  </script>
+</body>
+</html>
