@@ -1,0 +1,370 @@
+<html lang="id" class="scroll-smooth">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tic Tac Toe</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+/>
+<style>
+  /* Smooth transitions for theme changes */
+  body {
+    transition: background-color 1.2s ease;
+  }
+  /* Board squares */
+  .square {
+    aspect-ratio: 1 / 1;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.3s ease;
+  }
+  .square:hover {
+    background-color: #e2e8f0;
+  }
+  /* Bucin theme hearts animation */
+  .heart {
+    position: fixed;
+    top: -50px;
+    font-size: 1.5rem;
+    color: #ff2d55;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(0 0 2px #ff2d55);
+  }
+  @keyframes fall {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
+  /* Text fade in */
+  .fade-in {
+    animation: fadeInText 2s ease forwards;
+    opacity: 0;
+  }
+  @keyframes fadeInText {
+    to {
+      opacity: 1;
+    }
+  }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-1000 ease-in-out select-none">
+
+<h1 class="text-4xl font-semibold mb-8 text-gray-800 select-none">Tic Tac Toe</h1>
+
+<div id="board" class="grid grid-cols-3 grid-rows-3 gap-4 w-72 max-w-full">
+  <button class="square bg-white rounded-lg shadow-md flex items-center justify-center text-6xl font-extrabold text-gray-700" data-index="0" aria-label="Kotak 1"></button>
+  <button class="square bg-white rounded-lg shadow-md flex items-center justify-center text-6xl font-extrabold text-gray-700" data-index="1" aria-label="Kotak 2"></button>
+  <button class="square bg-white rounded-lg shadow-md flex items-center justify-center text-6xl font-extrabold text-gray-700" data-index="2" aria-label="Kotak 3"></button>
+  <button class="square bg-white rounded-lg shadow-md flex items-center justify-center text-6xl font-extrabold text-gray-700" data-index="3" aria-label="Kotak 4"></button>
+  <button class="square bg-white rounded-lg shadow-md flex items-center justify-center text-6xl font-extrabold text-gray-700" data-index="4" aria-label="Kotak 5"></button>
+  <button class="square bg-white rounded-lg shadow-md flex items-center justify-center text-6xl font-extrabold text-gray-700" data-index="5" aria-label="Kotak 6"></button>
+  <button class="square bg-white rounded-lg shadow-md flex items-center justify-center text-6xl font-extrabold text-gray-700" data-index="6" aria-label="Kotak 7"></button>
+  <button class="square bg-white rounded-lg shadow-md flex items-center justify-center text-6xl font-extrabold text-gray-700" data-index="7" aria-label="Kotak 8"></button>
+  <button class="square bg-white rounded-lg shadow-md flex items-center justify-center text-6xl font-extrabold text-gray-700" data-index="8" aria-label="Kotak 9"></button>
+</div>
+
+<div id="message" class="mt-8 text-center text-xl font-semibold text-gray-700 min-h-[2rem] select-none"></div>
+
+<button id="restartBtn" class="mt-6 px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition-colors duration-300 select-none" aria-label="Mulai ulang permainan" hidden>Mulai Ulang</button>
+
+<!-- Audio for bucin theme -->
+<audio id="bucinAudio" loop preload="auto" src="45_0HW2p0x.mp3"></audio>
+
+<!-- Container for falling hearts -->
+<div id="heartsContainer" aria-hidden="true" class="pointer-events-none fixed inset-0 overflow-hidden z-50"></div>
+
+<!-- Container for bucin texts -->
+<div id="bucinTextsContainer" aria-live="polite" class="fixed inset-0 flex flex-col items-center justify-center pointer-events-none z-50 space-y-4 px-4 text-center"></div>
+
+<script>
+  (() => {
+    "use strict";
+
+    // Game variables
+    const boardEl = document.getElementById("board");
+    const squares = Array.from(boardEl.querySelectorAll("button.square"));
+    const messageEl = document.getElementById("message");
+    const restartBtn = document.getElementById("restartBtn");
+    const bucinAudio = document.getElementById("bucinAudio");
+    const heartsContainer = document.getElementById("heartsContainer");
+    const bucinTextsContainer = document.getElementById("bucinTextsContainer");
+    const body = document.body;
+
+    // Player is 'X', AI is 'O'
+    const PLAYER = "X";
+    const AI = "O";
+
+    // Game state: array of 9 elements, null or 'X' or 'O'
+    let board = Array(9).fill(null);
+    let gameOver = false;
+
+    // Bucin texts to show randomly after loss
+    const bucinTexts = [
+      "lopyuuuu️",
+      "jangannn tinggallliiiinnnn akuuu yaaa",
+      "mwahhhhhh",
+      "loppyuuuu sayangggg",
+      "lopyuuu lagiiiiiii",
+      "eaaaaaa",
+      "sekaliii lagiiiiiii, loppyuuuu",
+    ];
+
+    // Initialize game
+    function init() {
+      board.fill(null);
+      gameOver = false;
+      messageEl.textContent = "Giliranmu, klik kotak untuk mulai.";
+      restartBtn.hidden = true;
+      squares.forEach((sq) => {
+        sq.textContent = "";
+        sq.disabled = false;
+        sq.classList.remove("text-pink-600", "text-red-600");
+        sq.classList.add("text-gray-700");
+      });
+      // Reset theme to simple
+      resetTheme();
+    }
+
+    // Reset theme to simple
+    function resetTheme() {
+      // Stop bucin audio
+      bucinAudio.pause();
+      bucinAudio.currentTime = 0;
+
+      // Remove hearts
+      heartsContainer.innerHTML = "";
+
+      // Remove bucin texts
+      bucinTextsContainer.innerHTML = "";
+
+      // Reset body background and text colors
+      body.classList.remove("bg-gradient-to-br", "from-pink-400", "via-red-400", "to-pink-600");
+      body.style.backgroundColor = "";
+      body.style.color = "";
+
+      // Reset heading color
+      document.querySelector("h1").classList.remove("text-pink-700", "text-red-700");
+      document.querySelector("h1").classList.add("text-gray-800");
+    }
+
+    // Check for winner or draw
+    function checkWinner(bd) {
+      const lines = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+      ];
+      for (const [a, b, c] of lines) {
+        if (bd[a] && bd[a] === bd[b] && bd[a] === bd[c]) {
+          return bd[a];
+        }
+      }
+      if (bd.every((cell) => cell !== null)) return "draw";
+      return null;
+    }
+
+    // Minimax algorithm for AI (hard difficulty)
+    function minimax(newBoard, player) {
+      const winner = checkWinner(newBoard);
+      if (winner === PLAYER) return { score: -10 };
+      else if (winner === AI) return { score: 10 };
+      else if (winner === "draw") return { score: 0 };
+
+      const moves = [];
+
+      for (let i = 0; i < 9; i++) {
+        if (newBoard[i] === null) {
+          const move = {};
+          move.index = i;
+          newBoard[i] = player;
+
+          if (player === AI) {
+            const result = minimax(newBoard, PLAYER);
+            move.score = result.score;
+          } else {
+            const result = minimax(newBoard, AI);
+            move.score = result.score;
+          }
+
+          newBoard[i] = null;
+          moves.push(move);
+        }
+      }
+
+      let bestMove;
+      if (player === AI) {
+        let bestScore = -Infinity;
+        for (const move of moves) {
+          if (move.score > bestScore) {
+            bestScore = move.score;
+            bestMove = move;
+          }
+        }
+      } else {
+        let bestScore = Infinity;
+        for (const move of moves) {
+          if (move.score < bestScore) {
+            bestScore = move.score;
+            bestMove = move;
+          }
+        }
+      }
+      return bestMove;
+    }
+
+    // AI makes a move
+    function aiMove() {
+      if (gameOver) return;
+      const move = minimax(board.slice(), AI);
+      if (move && move.index !== undefined) {
+        board[move.index] = AI;
+        updateSquare(move.index, AI);
+        const winner = checkWinner(board);
+        if (winner) {
+          endGame(winner);
+        } else {
+          messageEl.textContent = "Giliranmu.";
+        }
+      }
+    }
+
+    // Update a square visually
+    function updateSquare(index, player) {
+      const sq = squares[index];
+      sq.textContent = player;
+      sq.disabled = true;
+      if (player === PLAYER) {
+        sq.classList.remove("text-gray-700");
+        sq.classList.add("text-indigo-600");
+      } else {
+        sq.classList.remove("text-gray-700");
+        sq.classList.add("text-red-600");
+      }
+    }
+
+    // Handle player click
+    function onSquareClick(e) {
+      if (gameOver) return;
+      const index = Number(e.currentTarget.dataset.index);
+      if (board[index] !== null) return;
+      board[index] = PLAYER;
+      updateSquare(index, PLAYER);
+      const winner = checkWinner(board);
+      if (winner) {
+        endGame(winner);
+      } else {
+        messageEl.textContent = "Giliran AI...";
+        // Delay AI move for UX
+        setTimeout(aiMove, 400);
+      }
+    }
+
+    // End game and show message
+    function endGame(winner) {
+      gameOver = true;
+      squares.forEach((sq) => (sq.disabled = true));
+      restartBtn.hidden = false;
+
+      if (winner === PLAYER) {
+        messageEl.textContent = "Selamat! Kamu menang 🎉";
+      } else if (winner === AI) {
+        messageEl.textContent = "Kamu kalah 😢";
+        activateBucinTheme();
+      } else {
+        messageEl.textContent = "Seri! Coba lagi.";
+      }
+    }
+
+    // Activate bucin theme after player loses
+    function activateBucinTheme() {
+      // Change background gradient pink/red
+      body.classList.add("bg-gradient-to-br", "from-pink-400", "via-red-400", "to-pink-600");
+      body.style.color = "#fff";
+
+      // Change heading color
+      const heading = document.querySelector("h1");
+      heading.classList.remove("text-gray-800");
+      heading.classList.add("text-pink-700", "text-red-700");
+
+      // Play romantic music
+      bucinAudio.volume = 0.15;
+      bucinAudio.play().catch(() => {});
+
+      // Start hearts animation
+      startHeartsAnimation();
+
+      // Show bucin texts randomly
+      startBucinTexts();
+    }
+
+    // Create and animate falling hearts
+    function startHeartsAnimation() {
+      const heartCount = 30;
+      heartsContainer.innerHTML = "";
+      for (let i = 0; i < heartCount; i++) {
+        const heart = document.createElement("div");
+        heart.classList.add("heart");
+        heart.style.left = `${Math.random() * 100}vw`;
+        heart.style.fontSize = `${12 + Math.random() * 18}px`;
+        heart.style.animationDuration = `${5 + Math.random() * 5}s`;
+        heart.style.animationDelay = `${Math.random() * 5}s`;
+        heart.innerHTML = "❤️";
+        heartsContainer.appendChild(heart);
+      }
+    }
+
+    // Show bucin texts randomly with fade in/out
+let bucinTextInterval;
+function startBucinTexts() {
+  bucinTextsContainer.innerHTML = "";
+  function showRandomText() {
+    bucinTextsContainer.innerHTML = "";
+    const text = bucinTexts[Math.floor(Math.random() * bucinTexts.length)];
+    const p = document.createElement("p");
+    p.textContent = text;
+    p.className = "fade-in text-3xl font-extrabold drop-shadow-lg select-none text-blue-600";  // Change to blue color
+    bucinTextsContainer.appendChild(p);
+  }
+  showRandomText();
+  bucinTextInterval = setInterval(showRandomText, 4000);
+}
+
+    // Stop bucin texts interval
+    function stopBucinTexts() {
+      clearInterval(bucinTextInterval);
+      bucinTextsContainer.innerHTML = "";
+    }
+
+    // Restart game handler
+    restartBtn.addEventListener("click", () => {
+      stopBucinTexts();
+      init();
+    });
+
+    // Add click listeners to squares
+    squares.forEach((sq) => {
+      sq.addEventListener("click", onSquareClick);
+    });
+
+    // Initialize on page load
+    init();
+  })();
+</script>
+</body>
+  </html>
